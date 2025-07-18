@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizMaster - Pro Quiz Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-light: #fdfdfd;
+      --bg-dark: #121212;
+      --text-light: #1f2937;
+      --text-dark: #e2e8f0;
+      --card-light: #ffffff;
+      --card-dark: #1e293b;
+      --accent: #4f46e5;
+      --accent-hover: #4338ca;
+      --correct: #16a34a;
+      --wrong: #dc2626;
+      --btn: #d1d5db;
+      --btn-hover: #cbd5e1;
+      --btn-dark: #374151;
+      --btn-dark-hover: #4b5563;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      margin: 0;
+      padding: 0;
+      transition: all 0.3s ease-in-out;
+    }
+
+    body.dark-mode {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: var(--card-light);
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+
+    body.dark-mode .container {
+      background-color: var(--card-dark);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .question {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .options label {
+      background: var(--btn);
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-light);
+    }
+
+    .options label:hover {
+      background: var(--btn-hover);
+    }
+
+    body.dark-mode .options label {
+      background: var(--btn-dark);
+      color: var(--text-dark);
+    }
+
+    body.dark-mode .options label:hover {
+      background: var(--btn-dark-hover);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .controls button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .controls button:hover {
+      background: var(--accent-hover);
+    }
+
+    .toggle-mode {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .toggle-mode button {
+      background: #555;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .score-box {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-top: 30px;
+      font-weight: bold;
+    }
+
+    .review {
+      margin-top: 30px;
+      border-top: 1px solid #ccc;
+      padding-top: 20px;
+    }
+
+    .review h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .review-item {
+      margin-bottom: 15px;
+    }
+
+    .review-item strong {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QuizMaster</h1>
+    <div id="quiz">
+      <div class="question" id="question">Loading...</div>
+      <div class="options" id="options"></div>
+      <div class="controls">
+        <button id="prevBtn">⟵ Previous</button>
+        <button id="nextBtn">Next ⟶</button>
+      </div>
+      <div class="score-box" id="scoreBox"></div>
+      <div class="review" id="review"></div>
+    </div>
+    <div class="toggle-mode">
+      <button id="modeToggle">🌙 Toggle Mode</button>
+    </div>
+  </div>
+
+  <script>
+    const quizData = [
+      { question: "Capital of India?", options: ["Mumbai", "Delhi", "Kolkata", "Chennai"], answer: "Delhi" },
+      { question: "HTML stands for?", options: ["HyperText Markup Language", "HighText Machine Language", "Home Tool Markup Language", "Hyper Tool Mark Language"], answer: "HyperText Markup Language" },
+      { question: "Largest planet in the solar system?", options: ["Mars", "Earth", "Jupiter", "Saturn"], answer: "Jupiter" },
+      { question: "JavaScript file extension?", options: [".js", ".java", ".py", ".json"], answer: ".js" },
+      { question: "Founder of Microsoft?", options: ["Steve Jobs", "Bill Gates", "Elon Musk", "Mark Zuckerberg"], answer: "Bill Gates" },
+      { question: "CSS used for?", options: ["Structure", "Content", "Design", "Database"], answer: "Design" },
+      { question: "Speed of light?", options: ["3x10^8 m/s", "5x10^6 m/s", "3x10^6 m/s", "None"], answer: "3x10^8 m/s" },
+      { question: "First web browser?", options: ["Mosaic", "Internet Explorer", "Netscape", "Google Chrome"], answer: "Mosaic" },
+      { question: "Which is not a programming language?", options: ["Python", "HTML", "Java", "C++"], answer: "HTML" },
+      { question: "Which tag is used to link CSS?", options: ["<link>", "<style>", "<css>", "<script>"], answer: "<link>" }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = Array(quizData.length).fill(null);
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const scoreBox = document.getElementById('scoreBox');
+    const reviewBox = document.getElementById('review');
+    const modeToggle = document.getElementById('modeToggle');
+
+    function loadQuestion(index) {
+      const q = quizData[index];
+      questionEl.textContent = `Q${index + 1}. ${q.question}`;
+      optionsEl.innerHTML = "";
+
+      q.options.forEach(option => {
+        const label = document.createElement('label');
+        label.textContent = option;
+        label.onclick = () => selectAnswer(option);
+
+        if (answered[index] !== null) {
+          if (option === q.answer) {
+            label.style.background = 'var(--correct)';
+            label.style.color = 'white';
+          } else if (option === answered[index]) {
+            label.style.background = 'var(--wrong)';
+            label.style.color = 'white';
+          }
+        }
+
+        optionsEl.appendChild(label);
+      });
+      updateScore();
+    }
+
+    function selectAnswer(selected) {
+      if (answered[currentQuestion] === null) {
+        answered[currentQuestion] = selected;
+        if (selected === quizData[currentQuestion].answer) score++;
+      }
+      loadQuestion(currentQuestion);
+    }
+
+    prevBtn.onclick = () => {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion(currentQuestion);
+      }
+    };
+
+    nextBtn.onclick = () => {
+      if (currentQuestion < quizData.length - 1) {
+        currentQuestion++;
+        loadQuestion(currentQuestion);
+      } else {
+        scoreBox.innerHTML = `✅ You scored ${score}/${quizData.length}!`;
+        renderReview();
+      }
+    };
+
+    function updateScore() {
+      scoreBox.innerHTML = currentQuestion === quizData.length - 1 ? `Your current score: ${score}/${quizData.length}` : '';
+    }
+
+    function renderReview() {
+      reviewBox.innerHTML = '<h2>📋 Quiz Review</h2>';
+      quizData.forEach((q, index) => {
+        const userAnswer = answered[index] || 'No answer';
+        reviewBox.innerHTML += `
+          <div class="review-item">
+            <strong>Q${index + 1}: ${q.question}</strong>
+            <div>Your answer: ${userAnswer}</div>
+            <div>Correct answer: ${q.answer}</div>
+          </div>
+        `;
+      });
+    }
+
+    modeToggle.onclick = () => {
+      document.body.classList.toggle('dark-mode');
+    };
+
+    loadQuestion(currentQuestion);
+  </script>
+</body>
+</html>
